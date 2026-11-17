@@ -1,22 +1,32 @@
-import { Module } from '@nestjs/common';
-import { createObserveModule } from '@nestjs/observe';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+  import { Module } from '@nestjs/common';
+  import { TypeOrmModule } from '@nestjs/typeorm';
+  import { AppController } from './app.controller';
+  import { AppService } from './app.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
-@Module({
-  imports: [
-    // Distributed tracing, auto-correlated logs, request/job metrics, error
-    // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com,
-    // then run `npx @nestjs/observe link` to write your key pair into .env.
-    ObserveModule.forRoot({
-      appKey: process.env.OBSERVE_APP_KEY ?? 'YOUR_APP_KEY',
-      appSecret: process.env.OBSERVE_APP_SECRET ?? 'YOUR_APP_SECRET',
-      serviceId: 'nestjs-typeorm-mysql',
+  @Module({
+    imports: [ 
+      ConfigModule.forRoot({
+        isGlobal: true,
+      }),
+      TypeOrmModule.forRootAsync(
+      {
+        imports:[ConfigModule],
+        inject: [ConfigService],
+        useFactory : (configService : ConfigService)=>({
+        type : 'mysql',
+        host : configService.get<string>('DB_HOST','localhost'),
+        port : configService.get<number>('DB_PORT',3306),
+        username:configService.get<string>('DB_USERNAME','kong'),
+        password:configService.get<string>('DB_PASSWORD',''),
+        database:configService.get<string>('DB_DATABASE'),
+        entities: [],
+        synchronize: true,
+      }),
     }),
-  ],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule {}
+    ],
+    controllers: [AppController],
+    providers: [AppService],
+  })
+  export class AppModule {}

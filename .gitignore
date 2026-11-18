@@ -46,6 +46,9 @@ Desktop.ini
 .env*
 !.env.example
 
+#learninglog
+learninglog.md
+
 # temp directory
 .temp
 .tmp
